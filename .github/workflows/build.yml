@@ -1,0 +1,27 @@
+name: Build macOS
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        run: |
+          mkdir out
+          find build -maxdepth 4 -type d \( -name "*.vst3" -o -name "*.component" \) -exec cp -R {} out/ \;
+          cd out && zip -r ../RiseMachine-mac.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RiseMachine-mac
+          path: RiseMachine-mac.zip
